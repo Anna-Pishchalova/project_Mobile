@@ -1,4 +1,4 @@
-package com.example.mobile.data.rerository
+package com.example.mobile.data.repository
 
 import com.example.mobile.data.api.ScheduleApi
 import com.example.mobile.data.dto.ScheduleByDateDto

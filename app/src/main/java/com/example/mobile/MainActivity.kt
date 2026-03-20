@@ -11,59 +11,33 @@ import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.Icon
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
-import com.example.mobile.ui.theme.MobileTheme
+import com.example.mobile.data.api.ScheduleApi
+import com.example.mobile.data.repository.ScheduleRepository
+import com.example.mobile.ui.schedule.ScheduleScreen
+import com.example.mobile.ui.theme.CollegeScheduleTheme
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.Retrofit
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MobileTheme {
-                MobileApp()
+            CollegeScheduleTheme {
+                CollegeScheduleApp()
             }
-        }
-    }
-}
-
-@PreviewScreenSizes
-@Composable
-fun MobileApp() {
-    var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.HOME) }
-
-    NavigationSuiteScaffold(
-        navigationSuiteItems = {
-            AppDestinations.entries.forEach {
-                item(
-                    icon = {
-                        Icon(
-                            it.icon,
-                            contentDescription = it.label
-                        )
-                    },
-                    label = { Text(it.label) },
-                    selected = it == currentDestination,
-                    onClick = { currentDestination = it }
-                )
-            }
-        }
-    ) {
-        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-            Greeting(
-                name = "Android",
-                modifier = Modifier.padding(innerPadding)
-            )
         }
     }
 }
@@ -77,18 +51,54 @@ enum class AppDestinations(
     PROFILE("Profile", Icons.Default.AccountBox),
 }
 
+@PreviewScreenSizes
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+fun CollegeScheduleApp() {
+    var currentDestination by rememberSaveable {
+        mutableStateOf(AppDestinations.HOME)
+    }
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    MobileTheme {
-        Greeting("Android")
+    val retrofit = remember {
+        Retrofit.Builder()
+            .baseUrl("http://10.0.2.2:5268/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+
+    val api = remember { retrofit.create(ScheduleApi::class.java) }
+    val repository = remember { ScheduleRepository(api) }
+
+    NavigationSuiteScaffold(
+        navigationSuiteItems = {
+            AppDestinations.entries.forEach { destination ->
+                item(
+                    icon = {
+                        Icon(
+                            destination.icon,
+                            contentDescription = destination.label
+                        )
+                    },
+                    label = { Text(destination.label) },
+                    selected = destination == currentDestination,
+                    onClick = { currentDestination = destination }
+                )
+            }
+        }
+    ) {
+        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+            when (currentDestination) {
+                AppDestinations.HOME -> ScheduleScreen()
+                AppDestinations.FAVORITES ->
+                    Text(
+                        "Избранные группы",
+                        modifier = Modifier.padding(innerPadding)
+                    )
+                AppDestinations.PROFILE ->
+                    Text(
+                        "Профиль студента",
+                        modifier = Modifier.padding(innerPadding)
+                    )
+            }
+        }
     }
 }
