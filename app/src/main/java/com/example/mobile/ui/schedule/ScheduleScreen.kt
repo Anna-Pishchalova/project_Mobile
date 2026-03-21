@@ -1,39 +1,149 @@
 package com.example.mobile.ui.schedule
 
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import com.example.mobile.data.dto.ScheduleByDateDto
-import com.example.mobile.data.network.RetrofitInstance
-import com.example.mobile.utils.getWeekDateRange
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.mobile.data.dto.ScheduleDto
+import com.example.mobile.data.repository.FavoritesRepository
+import com.example.mobile.ui.components.ScheduleCard
+import com.example.mobile.ui.components.SearchableDropdown
+import kotlinx.coroutines.launch
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ScheduleScreen() {
-    var schedule by remember {
-        mutableStateOf<List<ScheduleByDateDto>>(emptyList()) }
-    var loading by remember { mutableStateOf(true) }
-    var error by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(Unit) {
-        val (start, end) = getWeekDateRange()
-        try {
-            schedule = RetrofitInstance.api.getSchedule(
-                "ИС-12",
-                start,
-                end
-            )
-        } catch (e: Exception) {
-            error = e.message
-        } finally {
-            loading = false
+fun ScheduleScreen(
+    viewModel: ScheduleViewModel,
+    favoritesRepository: FavoritesRepository,
+    modifier: Modifier = Modifier
+) {
+    val groupsState by viewModel.groupsState.collectAsState()
+    val scheduleState by viewModel.scheduleState.collectAsState()
+    val favorites by favoritesRepository.favoritesFlow.collectAsState(initial = emptySet())
+
+    var selectedGroup by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Text(
+            text = "Расписание занятий",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        when (groupsState) {
+            is GroupsState.Loading -> {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            }
+            is GroupsState.Success -> {
+                val groups = (groupsState as GroupsState.Success).groups
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    SearchableDropdown(
+                        items = groups,
+                        selectedItem = selectedGroup,
+                        onItemSelected = { group ->
+                            selectedGroup = group
+                            viewModel.loadSchedule(group)
+                        },
+                        placeholder = "Выберите группу",
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    if (selectedGroup != null) {
+                        val isFavorite = favorites.contains(selectedGroup)
+                        IconButton(
+                            onClick = {
+                                scope.launch {
+                                    if (isFavorite) {
+                                        favoritesRepository.removeFavorite(selectedGroup!!)
+                                    } else {
+                                        favoritesRepository.addFavorite(selectedGroup!!)
+                                    }
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = if (isFavorite) "Удалить из избранного" else "Добавить в избранное",
+                                tint = if (isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+            }
+            is GroupsState.Error -> {
+                Text(
+                    text = "Ошибка загрузки групп",
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
         }
-    }
-    when {
-        loading -> CircularProgressIndicator()
-        error != null -> Text("Ошибка: $error")
-        else -> ScheduleList(schedule)
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        when (scheduleState) {
+            is ScheduleState.Loading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+            is ScheduleState.Success -> {
+                val schedule = (scheduleState as ScheduleState.Success).schedule
+
+                if (schedule.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Нет занятий на выбранную дату",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(schedule) { item ->
+                            ScheduleCard(schedule = item)
+                        }
+                    }
+                }
+            }
+            is ScheduleState.Error -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Ошибка загрузки расписания",
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        }
     }
 }

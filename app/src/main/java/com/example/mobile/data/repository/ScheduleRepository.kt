@@ -1,13 +1,17 @@
 package com.example.mobile.data.repository
 
 import com.example.mobile.data.api.ScheduleApi
-import com.example.mobile.data.dto.ScheduleByDateDto
-class ScheduleRepository(private val api: ScheduleApi) {
-    suspend fun loadSchedule(group: String): List<ScheduleByDateDto> {
-        return api.getSchedule(
-            groupName = group,
-            start = "2026-01-12",
-            end = "2026-01-17"
-        )
+import com.example.mobile.data.dto.ScheduleDto
+
+class ScheduleRepository(
+    private val api: ScheduleApi
+) {
+    suspend fun getGroups(): List<String> {
+        val response = api.getGroups()
+        return response.map { it.groupName }.sorted()
+    }
+
+    suspend fun getSchedule(groupName: String): List<ScheduleDto> {
+        return api.getSchedule(groupName)
     }
 }
