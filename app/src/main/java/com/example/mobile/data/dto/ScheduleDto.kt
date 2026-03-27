@@ -1,5 +1,10 @@
 package com.example.mobile.data.dto
 
+data class ScheduleResponse(
+    val lessonDate: String,
+    val weekday: String,
+    val lessons: List<LessonDto>
+)
 data class ScheduleDto(
     val id: Int,
     val groupName: String,
@@ -11,9 +16,4 @@ data class ScheduleDto(
     val lessonDate: String,
     val lessonNumber: Int,
     val groupPart: String?
-)
-
-data class GroupDto(
-    val id: Int,
-    val groupName: String
 )

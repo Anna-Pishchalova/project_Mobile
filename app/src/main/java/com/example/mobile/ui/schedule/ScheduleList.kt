@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.mobile.data.dto.ScheduleByDateDto
+
 @Composable
 fun ScheduleList(data: List<ScheduleByDateDto>) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
@@ -23,7 +24,8 @@ fun ScheduleList(data: List<ScheduleByDateDto>) {
                 modifier = Modifier.padding(8.dp)
             )
             if (day.lessons.isEmpty()) {
-                Text("Информация отсутствует",
+                Text(
+                    "Информация отсутствует",
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                 )
@@ -35,13 +37,22 @@ fun ScheduleList(data: List<ScheduleByDateDto>) {
                             .fillMaxWidth()
                     ) {
                         Column(Modifier.padding(8.dp)) {
-                            Text("Пара ${lesson.lessonNumber} (${lesson.time})")
-                            lesson.groupParts.forEach { (part, info) ->
-                                if (info != null) {
-                                    Text("$part: ${info.subject}")
-                                    Text(info.teacher)
-                                    Text("${info.building}, ${info.classroom}")
+                            Text("Пара ${lesson.lessonNumber} (${lesson.time ?: "время не указано"})")
+
+                            // ✅ Исправлено: безопасная проверка на null
+                            if (!lesson.groupParts.isNullOrEmpty()) {
+                                lesson.groupParts.forEach { (part, info) ->
+                                    if (info != null) {
+                                        Text("$part: ${info.subject ?: "без названия"}")
+                                        Text(info.teacher ?: "преподаватель не указан")
+                                        Text("${info.building ?: "корпус не указан"}, ${info.classroom ?: "аудитория не указана"}")
+                                    }
                                 }
+                            } else {
+                                // Если нет подгрупп, показываем основные данные
+                                Text(lesson.subject ?: "Без названия")
+                                Text(lesson.teacher ?: "Преподаватель не указан")
+                                Text("${lesson.building ?: "Корпус не указан"}, ${lesson.classroom ?: "Аудитория не указана"}")
                             }
                         }
                     }

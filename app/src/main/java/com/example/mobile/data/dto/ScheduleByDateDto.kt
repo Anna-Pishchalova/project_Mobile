@@ -1,7 +1,7 @@
 package com.example.mobile.data.dto
 
 data class ScheduleByDateDto(
-    val lessonDate: String, // ISO: 2026-01-12
+    val lessonDate: String,
     val weekday: String,
     val lessons: List<LessonDto>
 )

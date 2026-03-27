@@ -8,6 +8,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import android.util.Log
+import java.time.LocalDate
 
 sealed class GroupsState {
     object Loading : GroupsState()
@@ -40,21 +42,26 @@ class ScheduleViewModel(
             _groupsState.value = GroupsState.Loading
             try {
                 val groups = repository.getGroups()
+                Log.d("ScheduleViewModel", "✅ Группы загружены: ${groups.size}")
                 _groupsState.value = GroupsState.Success(groups)
             } catch (e: Exception) {
-                _groupsState.value = GroupsState.Error(e.message ?: "Ошибка загрузки групп")
+                Log.e("ScheduleViewModel", "❌ Ошибка загрузки групп", e)
+                _groupsState.value = GroupsState.Error(e.message ?: "Неизвестная ошибка")
             }
         }
     }
 
-    fun loadSchedule(groupName: String) {
+    fun loadSchedule(groupName: String, date: LocalDate = LocalDate.now()) {
         viewModelScope.launch {
             _scheduleState.value = ScheduleState.Loading
             try {
-                val schedule = repository.getSchedule(groupName)
+                Log.d("ScheduleViewModel", "📅 Загрузка расписания для $groupName на $date")
+                val schedule = repository.getSchedule(groupName, date, date)
+                Log.d("ScheduleViewModel", "✅ Расписание загружено: ${schedule.size} занятий")
                 _scheduleState.value = ScheduleState.Success(schedule)
             } catch (e: Exception) {
-                _scheduleState.value = ScheduleState.Error(e.message ?: "Ошибка загрузки расписания")
+                Log.e("ScheduleViewModel", "❌ Ошибка загрузки расписания", e)
+                _scheduleState.value = ScheduleState.Error(e.message ?: "Неизвестная ошибка")
             }
         }
     }

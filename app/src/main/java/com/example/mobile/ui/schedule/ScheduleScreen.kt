@@ -12,12 +12,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mobile.data.dto.ScheduleDto
 import com.example.mobile.data.repository.FavoritesRepository
 import com.example.mobile.ui.components.ScheduleCard
 import com.example.mobile.ui.components.SearchableDropdown
 import kotlinx.coroutines.launch
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,7 +35,7 @@ fun ScheduleScreen(
     val scope = rememberCoroutineScope()
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
@@ -91,9 +92,11 @@ fun ScheduleScreen(
                 }
             }
             is GroupsState.Error -> {
+                val errorMessage = (groupsState as GroupsState.Error).message
                 Text(
-                    text = "Ошибка загрузки групп",
-                    color = MaterialTheme.colorScheme.error
+                    text = "Ошибка загрузки групп: $errorMessage",
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(8.dp)
                 )
             }
         }
@@ -134,12 +137,13 @@ fun ScheduleScreen(
                 }
             }
             is ScheduleState.Error -> {
+                val errorMessage = (scheduleState as ScheduleState.Error).message
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Ошибка загрузки расписания",
+                        text = "Ошибка загрузки расписания: $errorMessage",
                         color = MaterialTheme.colorScheme.error
                     )
                 }

@@ -1,6 +1,5 @@
 package com.example.mobile.ui.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -14,21 +13,32 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.mobile.data.dto.ScheduleDto
+import com.example.mobile.ui.theme.BuildingMainColor
+import com.example.mobile.ui.theme.BuildingAColor
+import com.example.mobile.ui.theme.BuildingBColor
+import com.example.mobile.ui.theme.BuildingLabColor
+import com.example.mobile.ui.theme.BuildingDefaultColor
 
-fun getBuildingColor(building: String): Color = when (building.lowercase()) {
-    "главный" -> Color(0xFF4CAF50)
-    "корпус а" -> Color(0xFF2196F3)
-    "корпус б" -> Color(0xFFFF9800)
-    "лабораторный" -> Color(0xFF9C27B0)
-    else -> Color(0xFF607D8B)
+// ==================== ЦВЕТА ДЛЯ КОРПУСОВ ====================
+
+fun getBuildingColor(building: String?): Color = when (building?.lowercase()) {
+    "главный" -> BuildingMainColor
+    "корпус а" -> BuildingAColor
+    "корпус б" -> BuildingBColor
+    "лабораторный" -> BuildingLabColor
+    else -> BuildingDefaultColor
 }
 
-fun getLessonTypeIcon(type: String): ImageVector = when (type.lowercase()) {
+// ==================== ИКОНКИ ДЛЯ ТИПОВ ЗАНЯТИЙ ====================
+
+fun getLessonTypeIcon(type: String?): ImageVector = when (type?.lowercase()) {
     "лекция", "лекции" -> Icons.Default.School
     "практика", "практические" -> Icons.Default.Build
     "лабораторная", "лаба" -> Icons.Default.Science
     else -> Icons.Default.Description
 }
+
+// ==================== КАРТОЧКА РАСПИСАНИЯ ====================
 
 @Composable
 fun ScheduleCard(
@@ -47,6 +57,7 @@ fun ScheduleCard(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
+            // Верхняя строка: время и номер пары
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -83,7 +94,7 @@ fun ScheduleCard(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = schedule.building,
+                            text = schedule.building ?: "Не указан",
                             style = MaterialTheme.typography.labelSmall,
                             color = buildingColor,
                             fontWeight = FontWeight.Medium
@@ -94,18 +105,19 @@ fun ScheduleCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Название предмета
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
                     imageVector = getLessonTypeIcon(schedule.lessonType),
-                    contentDescription = schedule.lessonType,
+                    contentDescription = schedule.lessonType ?: "Занятие",
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = schedule.subject,
+                    text = schedule.subject ?: "Без названия",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -113,6 +125,7 @@ fun ScheduleCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Преподаватель
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Default.Person,
@@ -122,7 +135,7 @@ fun ScheduleCard(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = schedule.teacher,
+                    text = schedule.teacher ?: "Не указан",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -130,6 +143,7 @@ fun ScheduleCard(
 
             Spacer(modifier = Modifier.height(4.dp))
 
+            // Аудитория
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Default.MeetingRoom,
@@ -139,12 +153,13 @@ fun ScheduleCard(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = schedule.classroom,
+                    text = schedule.classroom ?: "Не указана",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
+            // Часть группы (если есть)
             if (!schedule.groupPart.isNullOrBlank()) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
